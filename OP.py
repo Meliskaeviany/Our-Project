@@ -64,6 +64,28 @@ border-radius:10px;
 
 </style>
 """, unsafe_allow_html=True)
+# ======================
+# GRAFIK KEUANGAN
+# ======================
+
+st.subheader("Grafik Keuangan")
+
+df = st.session_state.transaksi.copy()
+
+if not df.empty:
+
+    df["Tanggal"] = pd.to_datetime(df["Tanggal"])
+
+    grafik = df.groupby("Tanggal").agg(
+        Pemasukan=("Pemasukan","sum"),
+        Pengeluaran=("Pengeluaran","sum")
+    )
+
+    grafik["Keuntungan"] = grafik["Pemasukan"] - grafik["Pengeluaran"]
+
+    st.line_chart(grafik)
+
+st.divider()
 
 # ======================
 # DATA STORAGE
@@ -284,3 +306,4 @@ st.download_button(
     file_name="laporan_keuangan.pdf",
     mime="application/pdf"
 )
+
