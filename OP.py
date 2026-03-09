@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import streamlit as st
 import io
 import os
 
@@ -236,8 +237,6 @@ if st.button("📋 Lihat Log Login"):
     else:
         st.write("Belum ada login yang tercatat.")
 
-import streamlit as st
-
 # =========================
 # JUDUL CUSTOM FONT PALETTE STYLE
 # =========================
@@ -289,6 +288,7 @@ st.markdown("""
     </span>
 </h1>
 """, unsafe_allow_html=True)
+
 
 
 
