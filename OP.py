@@ -236,3 +236,17 @@ st.download_button(
     file_name="laporan_keuangan.pdf",
     mime="application/pdf"
 )
+
+# =========================
+# TOMBOL LIHAT LOG LOGIN
+# =========================
+st.divider()
+st.subheader("Login History (opsional)")
+
+if st.button("📋 Lihat Log Login"):
+    if os.path.exists("log_login.csv"):
+        log_df = pd.read_csv("log_login.csv")
+        st.dataframe(log_df)
+    else:
+        st.write("Belum ada login yang tercatat.")
+
