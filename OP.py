@@ -241,7 +241,7 @@ st.download_button(
 # TOMBOL LIHAT LOG LOGIN
 # =========================
 st.divider()
-st.subheader("Login History (opsional)")
+st.subheader("Login History")
 
 if st.button("📋 Lihat Log Login"):
     if os.path.exists("log_login.csv"):
@@ -249,4 +249,5 @@ if st.button("📋 Lihat Log Login"):
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
+
 
