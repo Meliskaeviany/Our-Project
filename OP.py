@@ -4,6 +4,7 @@ from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
+import os
 
 # =========================
 # STYLE MAROON & PUTIH
@@ -11,39 +12,13 @@ import io
 st.markdown(
     """
     <style>
-    /* Background utama */
-    .stApp {
-        background-color: #740505;
-        color: #fefdfd;
-    }
-
-    /* Judul dan header */
-    h1,h2,h3,h4,h5,h6 {
-        color: #fefdfd;
-    }
-
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background-color: #5c0303;
-        color: #fefdfd;
-    }
-
-    /* Tombol */
-    div.stButton > button {
-        background-color: #9c0a0a;
-        color: #fefdfd;
-    }
-
-    /* Metric card */
-    div[data-testid="metric-container"] {
-        background-color: #8b0c0c;
-        color: #fefdfd;
-        padding: 15px;
-        border-radius: 10px;
-    }
+    .stApp {background-color: #740505; color: #fefdfd;}
+    h1,h2,h3,h4,h5,h6 {color: #fefdfd;}
+    [data-testid="stSidebar"] {background-color: #5c0303; color: #fefdfd;}
+    div.stButton > button {background-color: #9c0a0a; color: #fefdfd;}
+    div[data-testid="metric-container"] {background-color: #8b0c0c; color: #fefdfd; padding:15px; border-radius:10px;}
     </style>
-    """,
-    unsafe_allow_html=True
+    """, unsafe_allow_html=True
 )
 
 # =========================
@@ -69,14 +44,23 @@ if not st.session_state.login:
     st.stop()
 
 # =========================
-# DATA STORAGE
+# DATA STORAGE DENGAN CSV
 # =========================
-if "transaksi" not in st.session_state:
+# File CSV
+transaksi_file = "transaksi.csv"
+pembagian_file = "pembagian.csv"
+
+# Load CSV atau buat DataFrame kosong jika belum ada
+if os.path.exists(transaksi_file):
+    st.session_state.transaksi = pd.read_csv(transaksi_file)
+else:
     st.session_state.transaksi = pd.DataFrame(
         columns=["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran"]
     )
 
-if "pembagian" not in st.session_state:
+if os.path.exists(pembagian_file):
+    st.session_state.pembagian = pd.read_csv(pembagian_file)
+else:
     st.session_state.pembagian = pd.DataFrame(
         columns=["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner"]
     )
@@ -131,6 +115,7 @@ if st.button("Simpan Transaksi"):
         "Pengeluaran":pengeluaran_input
     }
     st.session_state.transaksi = pd.concat([st.session_state.transaksi,pd.DataFrame([data])], ignore_index=True)
+    st.session_state.transaksi.to_csv(transaksi_file, index=False)  # Simpan otomatis ke CSV
     st.success("Transaksi berhasil disimpan")
 
 st.divider()
@@ -187,7 +172,7 @@ st.write("Partner :", rupiah(partner))
 
 if st.button("Simpan Pembagian"):
     data = {
-        "Tanggal":datetime.today(),
+        "Tanggal":datetime.today().strftime("%Y-%m-%d"),
         "Keuntungan":keuntungan_input,
         "Persepuluhan":persepuluhan,
         "Tabungan":tabungan,
@@ -195,6 +180,7 @@ if st.button("Simpan Pembagian"):
         "Partner":partner
     }
     st.session_state.pembagian = pd.concat([st.session_state.pembagian,pd.DataFrame([data])], ignore_index=True)
+    st.session_state.pembagian.to_csv(pembagian_file, index=False)  # Simpan otomatis ke CSV
     st.success("Pembagian tersimpan")
 
 st.dataframe(st.session_state.pembagian)
@@ -238,8 +224,8 @@ def buat_pdf():
     for i, row in st.session_state.transaksi.iterrows():
         pdf.drawString(50, y, str(row["Tanggal"]))
         pdf.drawString(150, y, str(row["Jenis"]))
-        pdf.drawString(300, y, str(row["Pemasukan"]))
-        pdf.drawString(420, y, str(row["Pengeluaran"]))
+        pdf.drawString(300, y, rupiah(row["Pemasukan"]))
+        pdf.drawString(420, y, rupiah(row["Pengeluaran"]))
         y -= 20
         if y < 50:
             pdf.showPage()
