@@ -120,21 +120,6 @@ if st.button("Simpan Transaksi"):
     st.success("Transaksi berhasil disimpan")
 
 # =========================
-# DATA TRANSAKSI & HAPUS
-# =========================
-st.subheader("Data Transaksi")
-st.dataframe(st.session_state.transaksi)
-
-st.markdown("#### Hapus Baris Transaksi")
-hapus_index = st.number_input("Masukkan index baris untuk dihapus:", min_value=0, max_value=len(st.session_state.transaksi)-1 if len(st.session_state.transaksi)>0 else 0)
-if st.button("Hapus Transaksi"):
-    if len(st.session_state.transaksi) > 0:
-        st.session_state.transaksi = st.session_state.transaksi.drop(hapus_index).reset_index(drop=True)
-        st.session_state.transaksi.to_csv(transaksi_file, index=False)
-        st.success("Transaksi berhasil dihapus")
-st.divider()
-
-# =========================
 # GRAFIK KEUANGAN
 # =========================
 st.subheader("Grafik Keuangan Harian")
@@ -250,4 +235,5 @@ if st.button("📋 Lihat Log Login"):
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
+
 
