@@ -3,7 +3,6 @@ import pandas as pd
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import streamlit as st
 import io
 import os
 
@@ -236,58 +235,6 @@ if st.button("📋 Lihat Log Login"):
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
-
-# =========================
-# JUDUL CUSTOM FONT PALETTE STYLE
-# =========================
-st.markdown("""
-<!-- Import Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto:wght@700&display=swap" rel="stylesheet">
-
-<!-- Hello !! -->
-<h1 style='
-    font-family: "Pacifico", cursive; 
-    color:#b22222; 
-    font-size:60px; 
-    text-align:center;
-    margin-bottom:20px;
-'>
-    Hello 
-    <span style='
-        font-family: "Roboto", sans-serif; 
-        background-color:#ffcc00; 
-        color:#000; 
-        padding:5px 12px; 
-        border-radius:8px;
-        letter-spacing:3px;
-        font-weight:bold;
-    '>
-        !!
-    </span>
-</h1>
-
-<!-- Our Money Mission -->
-<h1 style='
-    font-family: "Pacifico", cursive; 
-    color:#b22222; 
-    font-size:50px; 
-    text-align:center;
-    margin-bottom:20px;
-'>
-    Our Money 
-    <span style='
-        font-family: "Roboto", sans-serif; 
-        background-color:#44bd32; 
-        color:#fff; 
-        padding:5px 12px; 
-        border-radius:8px;
-        letter-spacing:2px;
-        font-weight:bold;
-    '>
-        Mission
-    </span>
-</h1>
-""", unsafe_allow_html=True)
 
 
 
