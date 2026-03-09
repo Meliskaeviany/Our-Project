@@ -16,16 +16,14 @@ h1,h2,h3,h4,h5,h6 {color: #fefdfd;}
 [data-testid="stSidebar"] {background-color: #5c0303; color: #fefdfd;}
 div.stButton > button {background-color: #9c0a0a; color: #fefdfd;}
 div[data-testid="metric-container"] {background-color: #8b0c0c; color: #fefdfd; padding:15px; border-radius:10px;}
-</style>
-""", unsafe_allow_html=True)
+</style>""", unsafe_allow_html=True)
 
 # =========================
-# LOGIN DENGAN LOG OTOMATIS TERBATAS 50 ENTRY
+# LOGIN
 # =========================
 USERS = ["Steward","Meliska"]
 PASSWORD = "1312"
 log_file = "log_login.csv"
-MAX_LOG = 50  # Maksimum jumlah log login
 
 if "login" not in st.session_state:
     st.session_state.login = False
@@ -34,28 +32,23 @@ if not st.session_state.login:
     st.title("Login Aplikasi Keuangan")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-
     if st.button("Login"):
         if username in USERS and password == PASSWORD:
             st.session_state.login = True
             st.session_state.user = username
-
             # Simpan log login
             login_data = pd.DataFrame([{
                 "Username": username,
                 "Waktu": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }])
             if os.path.exists(log_file):
-                log_df = pd.read_csv(log_file)
-                if len(log_df) >= MAX_LOG:
-                    log_df = login_data  # reset log jika >= MAX_LOG
-                else:
-                    log_df = pd.concat([log_df, login_data], ignore_index=True)
+                df_log = pd.read_csv(log_file)
+                df_log = pd.concat([df_log, login_data], ignore_index=True)
+                if len(df_log) > 50:  # jika lebih dari 50 login, hapus paling lama
+                    df_log = df_log.tail(50).reset_index(drop=True)
+                df_log.to_csv(log_file, index=False)
             else:
-                log_df = login_data
-            log_df.to_csv(log_file, index=False)
-
-            st.success("Login berhasil")
+                login_data.to_csv(log_file, index=False)
             st.rerun()
         else:
             st.error("Username atau password salah")
@@ -76,7 +69,7 @@ def load_csv(file, columns):
 st.session_state.transaksi = load_csv(transaksi_file,
                                       ["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran"])
 st.session_state.pembagian = load_csv(pembagian_file,
-                                      ["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner","Rekening"])
+                                      ["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner","Penyimpanan"])
 
 # =========================
 # FORMAT RUPIAH
@@ -168,7 +161,7 @@ if not df.empty:
 st.divider()
 
 # =========================
-# PEMBAGIAN KEUNTUNGAN SESUAI METODE EKONOMI
+# PEMBAGIAN KEUNTUNGAN
 # =========================
 st.subheader("Pembagian Keuntungan")
 keuntungan_input = st.number_input("Masukkan Total Keuntungan",0)
@@ -179,11 +172,12 @@ partner = keuntungan_input * 0.10
 
 st.write("Persepuluhan :", rupiah(persepuluhan))
 st.write("Tabungan Bersama :", rupiah(tabungan))
-st.write("Modal :", rupiah(modal))
+st.write("Modal Usaha :", rupiah(modal))
 st.write("Partner :", rupiah(partner))
 
-rekening_pb = st.selectbox("Pilih Rekening Penyimpanan", 
-                           ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
+# Pilihan penyimpanan
+penyimpanan = st.selectbox("Pilih Rekening Penyimpanan",
+                           ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","ALADIN Meliska"])
 
 if st.button("Simpan Pembagian"):
     new_data = pd.DataFrame([{
@@ -193,13 +187,14 @@ if st.button("Simpan Pembagian"):
         "Tabungan": tabungan,
         "Modal": modal,
         "Partner": partner,
-        "Rekening": rekening_pb
+        "Penyimpanan": penyimpanan
     }])
     st.session_state.pembagian = pd.concat([st.session_state.pembagian,new_data], ignore_index=True)
     st.session_state.pembagian.to_csv(pembagian_file, index=False)
     st.success("Pembagian tersimpan")
 
 st.dataframe(st.session_state.pembagian)
+
 st.divider()
 
 # =========================
@@ -209,6 +204,7 @@ st.subheader("Download Laporan PDF")
 def buat_pdf():
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
+
     pdf.setFont("Helvetica-Bold", 18)
     pdf.drawCentredString(306, 750, "LAPORAN KEUANGAN USAHA")
     tanggal_laporan = datetime.now().strftime("%d %B %Y")
