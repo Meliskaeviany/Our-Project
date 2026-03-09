@@ -20,11 +20,12 @@ div[data-testid="metric-container"] {background-color: #8b0c0c; color: #fefdfd; 
 """, unsafe_allow_html=True)
 
 # =========================
-# LOGIN
+# LOGIN DENGAN LOG OTOMATIS TERBATAS 50 ENTRY
 # =========================
 USERS = ["Steward","Meliska"]
 PASSWORD = "1312"
 log_file = "log_login.csv"
+MAX_LOG = 50  # Maksimum jumlah log login
 
 if "login" not in st.session_state:
     st.session_state.login = False
@@ -33,26 +34,35 @@ if not st.session_state.login:
     st.title("Login Aplikasi Keuangan")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
+
     if st.button("Login"):
         if username in USERS and password == PASSWORD:
             st.session_state.login = True
             st.session_state.user = username
+
             # Simpan log login
             login_data = pd.DataFrame([{
                 "Username": username,
                 "Waktu": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }])
             if os.path.exists(log_file):
-                login_data.to_csv(log_file, mode='a', header=False, index=False)
+                log_df = pd.read_csv(log_file)
+                if len(log_df) >= MAX_LOG:
+                    log_df = login_data  # reset log jika >= MAX_LOG
+                else:
+                    log_df = pd.concat([log_df, login_data], ignore_index=True)
             else:
-                login_data.to_csv(log_file, index=False)
+                log_df = login_data
+            log_df.to_csv(log_file, index=False)
+
+            st.success("Login berhasil")
             st.rerun()
         else:
             st.error("Username atau password salah")
     st.stop()
 
 # =========================
-# CSV FILES
+# FILE CSV
 # =========================
 transaksi_file = "transaksi.csv"
 pembagian_file = "pembagian.csv"
@@ -64,7 +74,7 @@ def load_csv(file, columns):
         return pd.DataFrame(columns=columns)
 
 st.session_state.transaksi = load_csv(transaksi_file,
-                                      ["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran","Rekening"])
+                                      ["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran"])
 st.session_state.pembagian = load_csv(pembagian_file,
                                       ["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner","Rekening"])
 
@@ -103,7 +113,6 @@ with col2:
     unit = st.number_input("Jumlah Unit",0)
     pemasukan_input = st.number_input("Pemasukan",0)
     pengeluaran_input = st.number_input("Pengeluaran",0)
-    rekening = st.selectbox("Pilih Rekening", ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
 
 if st.button("Simpan Transaksi"):
     new_data = pd.DataFrame([{
@@ -112,8 +121,7 @@ if st.button("Simpan Transaksi"):
         "Keterangan": keterangan,
         "Unit": unit,
         "Pemasukan": pemasukan_input,
-        "Pengeluaran": pengeluaran_input,
-        "Rekening": rekening
+        "Pengeluaran": pengeluaran_input
     }])
     st.session_state.transaksi = pd.concat([st.session_state.transaksi,new_data], ignore_index=True)
     st.session_state.transaksi.to_csv(transaksi_file, index=False)
@@ -137,30 +145,30 @@ st.divider()
 # =========================
 # GRAFIK KEUANGAN
 # =========================
-st.subheader("Grafik Keuangan Harian")
+st.subheader("Grafik Keuangan")
 df = st.session_state.transaksi.copy()
 if not df.empty:
     df["Tanggal"] = pd.to_datetime(df["Tanggal"])
-    grafik = df.groupby("Tanggal").agg(
-        Pemasukan=("Pemasukan","sum"),
-        Pengeluaran=("Pengeluaran","sum")
-    )
+    grafik = df.groupby("Tanggal").agg(Pemasukan=("Pemasukan","sum"),
+                                       Pengeluaran=("Pengeluaran","sum"))
     grafik["Keuntungan"] = grafik["Pemasukan"] - grafik["Pengeluaran"]
     st.line_chart(grafik)
-
-st.subheader("Grafik Keuangan Bulanan")
-if not df.empty:
-    df["Bulan"] = df["Tanggal"].dt.to_period("M")
-    bulanan = df.groupby("Bulan").agg(
-        Pemasukan=("Pemasukan","sum"),
-        Pengeluaran=("Pengeluaran","sum")
-    )
-    bulanan["Keuntungan"] = bulanan["Pemasukan"] - bulanan["Pengeluaran"]
-    st.line_chart(bulanan)
 st.divider()
 
 # =========================
-# PEMBAGIAN KEUNTUNGAN
+# REKAP BULANAN
+# =========================
+st.subheader("Rekap Bulanan")
+if not df.empty:
+    df["Bulan"] = df["Tanggal"].dt.month
+    rekap = df.groupby("Bulan").agg(Pemasukan=("Pemasukan","sum"),
+                                    Pengeluaran=("Pengeluaran","sum"))
+    rekap["Keuntungan"] = rekap["Pemasukan"] - rekap["Pengeluaran"]
+    st.dataframe(rekap)
+st.divider()
+
+# =========================
+# PEMBAGIAN KEUNTUNGAN SESUAI METODE EKONOMI
 # =========================
 st.subheader("Pembagian Keuntungan")
 keuntungan_input = st.number_input("Masukkan Total Keuntungan",0)
@@ -168,12 +176,14 @@ persepuluhan = keuntungan_input * 0.10
 tabungan = keuntungan_input * 0.50
 modal = keuntungan_input * 0.30
 partner = keuntungan_input * 0.10
-rekening_pb = st.selectbox("Pilih Rekening Pembagian", ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
 
 st.write("Persepuluhan :", rupiah(persepuluhan))
-st.write("Tabungan :", rupiah(tabungan))
+st.write("Tabungan Bersama :", rupiah(tabungan))
 st.write("Modal :", rupiah(modal))
 st.write("Partner :", rupiah(partner))
+
+rekening_pb = st.selectbox("Pilih Rekening Penyimpanan", 
+                           ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
 
 if st.button("Simpan Pembagian"):
     new_data = pd.DataFrame([{
@@ -205,28 +215,29 @@ def buat_pdf():
     pdf.setFont("Helvetica", 12)
     pdf.drawCentredString(306, 730, f"Tanggal Laporan: {tanggal_laporan}")
     pdf.line(50, 720, 562, 720)
+
     y = 690
     pdf.setFont("Helvetica-Bold", 11)
     pdf.drawString(50, y, "Tanggal")
     pdf.drawString(150, y, "Jenis")
     pdf.drawString(300, y, "Pemasukan")
     pdf.drawString(420, y, "Pengeluaran")
-    pdf.drawString(500, y, "Rekening")
     y -= 10
     pdf.line(50, y, 562, y)
     y -= 20
+
     pdf.setFont("Helvetica", 10)
     for i, row in st.session_state.transaksi.iterrows():
         pdf.drawString(50, y, str(row["Tanggal"]))
         pdf.drawString(150, y, str(row["Jenis"]))
         pdf.drawString(300, y, rupiah(row["Pemasukan"]))
         pdf.drawString(420, y, rupiah(row["Pengeluaran"]))
-        pdf.drawString(500, y, str(row["Tabungan"]))
         y -= 20
         if y < 50:
             pdf.showPage()
             pdf.setFont("Helvetica", 10)
             y = 750
+
     pdf.save()
     buffer.seek(0)
     return buffer
@@ -240,13 +251,13 @@ st.download_button(
 )
 
 # =========================
-# LIHAT LOG LOGIN
+# TOMBOL LIHAT LOG LOGIN
 # =========================
 st.divider()
 st.subheader("Login History")
 if st.button("📋 Lihat Log Login"):
-    if os.path.exists("log_login.csv"):
-        log_df = pd.read_csv("log_login.csv")
+    if os.path.exists(log_file):
+        log_df = pd.read_csv(log_file)
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
