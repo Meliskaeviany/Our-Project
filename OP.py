@@ -251,36 +251,75 @@ st.divider()
 # DOWNLOAD PDF
 # ======================
 
-st.subheader("Download Laporan PDF")
-
 def buat_pdf():
 
     buffer = io.BytesIO()
-    pdf = canvas.Canvas(buffer,pagesize=letter)
 
-    pdf.drawString(200,750,"Laporan Keuangan Usaha")
+    # Register font Times New Roman
+    pdfmetrics.registerFont(TTFont('TimesNewRoman', 'times.ttf'))
+    pdfmetrics.registerFont(TTFont('TimesNewRomanBold', 'timesbd.ttf'))
 
-    y = 700
+    pdf = canvas.Canvas(buffer, pagesize=letter)
 
-    for i,row in st.session_state.transaksi.iterrows():
+    # =========================
+    # JUDUL LAPORAN
+    # =========================
 
-        text = f"{row['Tanggal']} | {row['Jenis']} | {row['Pemasukan']} | {row['Pengeluaran']}"
+    pdf.setFont("TimesNewRomanBold", 18)
+    pdf.drawCentredString(300, 750, "LAPORAN KEUANGAN USAHA")
 
-        pdf.drawString(50,y,text)
+    # =========================
+    # TANGGAL LAPORAN
+    # =========================
+
+    tanggal_laporan = datetime.now().strftime("%d %B %Y")
+
+    pdf.setFont("TimesNewRoman", 12)
+    pdf.drawCentredString(300, 730, f"Tanggal Laporan : {tanggal_laporan}")
+
+    # Garis pemisah
+    pdf.line(50, 720, 550, 720)
+
+    # =========================
+    # HEADER TABEL
+    # =========================
+
+    y = 690
+
+    pdf.setFont("TimesNewRomanBold", 11)
+
+    pdf.drawString(50, y, "Tanggal")
+    pdf.drawString(150, y, "Jenis")
+    pdf.drawString(300, y, "Pemasukan")
+    pdf.drawString(420, y, "Pengeluaran")
+
+    y -= 10
+    pdf.line(50, y, 550, y)
+
+    y -= 20
+
+    # =========================
+    # DATA TRANSAKSI
+    # =========================
+
+    pdf.setFont("TimesNewRoman", 10)
+
+    for i, row in st.session_state.transaksi.iterrows():
+
+        pdf.drawString(50, y, str(row["Tanggal"]))
+        pdf.drawString(150, y, str(row["Jenis"]))
+        pdf.drawString(300, y, str(row["Pemasukan"]))
+        pdf.drawString(420, y, str(row["Pengeluaran"]))
 
         y -= 20
+
+        if y < 50:
+            pdf.showPage()
+            pdf.setFont("TimesNewRoman", 10)
+            y = 750
 
     pdf.save()
 
     buffer.seek(0)
 
     return buffer
-
-pdf_file = buat_pdf()
-
-st.download_button(
-    label="Download PDF",
-    data=pdf_file,
-    file_name="laporan_keuangan.pdf",
-    mime="application/pdf"
-)
