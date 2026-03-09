@@ -168,7 +168,7 @@ persepuluhan = keuntungan_input * 0.10
 tabungan = keuntungan_input * 0.50
 modal = keuntungan_input * 0.30
 partner = keuntungan_input * 0.10
-rekening_pb = st.selectbox("Pilih Rekening Pembagian", ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
+rekening_pb = st.selectbox("Pembagian Keuntungan", ["Tanggal","Keuntungan","Persepuluhan","Modal","Partner"])
 
 st.write("Persepuluhan :", rupiah(persepuluhan))
 st.write("Tabungan :", rupiah(tabungan))
@@ -250,3 +250,4 @@ if st.button("📋 Lihat Log Login"):
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
+
