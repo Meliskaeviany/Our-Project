@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -8,9 +7,9 @@ import io
 
 st.set_page_config(page_title="Keuangan Usaha", layout="wide")
 
-# =========================
+# ======================
 # LOGIN
-# =========================
+# ======================
 
 USERS = ["Steward","Meliska"]
 PASSWORD = "1312"
@@ -29,16 +28,15 @@ if not st.session_state.login:
         if username in USERS and password == PASSWORD:
             st.session_state.login = True
             st.session_state.user = username
-            st.success("Login berhasil")
             st.rerun()
         else:
             st.error("Username atau password salah")
 
     st.stop()
 
-# =========================
+# ======================
 # STYLE MAROON
-# =========================
+# ======================
 
 st.markdown("""
 <style>
@@ -61,36 +59,38 @@ border-radius:10px;
 .stButton>button{
 background-color:#800000;
 color:white;
-border-radius:8px;
+border-radius:10px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
+# ======================
 # DATA STORAGE
-# =========================
+# ======================
 
 if "transaksi" not in st.session_state:
+
     st.session_state.transaksi = pd.DataFrame(
         columns=["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran"]
     )
 
 if "pembagian" not in st.session_state:
+
     st.session_state.pembagian = pd.DataFrame(
         columns=["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner"]
     )
 
-# =========================
+# ======================
 # FORMAT RUPIAH
-# =========================
+# ======================
 
 def rupiah(x):
     return "Rp {:,}".format(int(x)).replace(",", ".")
 
-# =========================
+# ======================
 # DASHBOARD
-# =========================
+# ======================
 
 st.title("Dashboard Keuangan Usaha")
 
@@ -104,14 +104,11 @@ col1.metric("Total Pemasukan", rupiah(pemasukan))
 col2.metric("Total Pengeluaran", rupiah(pengeluaran))
 col3.metric("Keuntungan", rupiah(keuntungan))
 
-if keuntungan < 0:
-    st.warning("⚠ Usaha mengalami kerugian")
-
 st.divider()
 
-# =========================
+# ======================
 # INPUT TRANSAKSI
-# =========================
+# ======================
 
 st.subheader("Input Transaksi")
 
@@ -123,7 +120,7 @@ with col1:
 
     jenis = st.selectbox(
         "Jenis Transaksi",
-        ["Penjualan","Pembelian Barang","Modal Masuk","Biaya Operasional"]
+        ["Penjualan","Pembelian Barang","Modal Masuk","Operasional"]
     )
 
     keterangan = st.text_input("Keterangan")
@@ -156,9 +153,9 @@ if st.button("Simpan Transaksi"):
 
 st.divider()
 
-# =========================
+# ======================
 # DATA TRANSAKSI
-# =========================
+# ======================
 
 st.subheader("Data Transaksi")
 
@@ -166,9 +163,9 @@ st.dataframe(st.session_state.transaksi)
 
 st.divider()
 
-# =========================
+# ======================
 # GRAFIK KEUANGAN
-# =========================
+# ======================
 
 st.subheader("Grafik Keuangan")
 
@@ -185,22 +182,13 @@ if not df.empty:
 
     grafik["Keuntungan"] = grafik["Pemasukan"] - grafik["Pengeluaran"]
 
-    fig, ax = plt.subplots()
-
-    ax.plot(grafik.index, grafik["Pemasukan"], label="Pemasukan")
-    ax.plot(grafik.index, grafik["Pengeluaran"], label="Pengeluaran")
-    ax.plot(grafik.index, grafik["Keuntungan"], label="Keuntungan")
-
-    ax.legend()
-    ax.set_title("Grafik Keuangan")
-
-    st.pyplot(fig)
+    st.line_chart(grafik)
 
 st.divider()
 
-# =========================
+# ======================
 # REKAP BULANAN
-# =========================
+# ======================
 
 st.subheader("Rekap Bulanan")
 
@@ -217,19 +205,11 @@ if not df.empty:
 
     st.dataframe(rekap)
 
-    fig2, ax2 = plt.subplots()
-
-    ax2.bar(rekap.index, rekap["Keuntungan"])
-
-    ax2.set_title("Keuntungan Per Bulan")
-
-    st.pyplot(fig2)
-
 st.divider()
 
-# =========================
+# ======================
 # PEMBAGIAN KEUNTUNGAN
-# =========================
+# ======================
 
 st.subheader("Pembagian Keuntungan")
 
@@ -261,17 +241,17 @@ if st.button("Simpan Pembagian"):
         ignore_index=True
     )
 
-    st.success("Pembagian disimpan")
+    st.success("Pembagian tersimpan")
 
 st.dataframe(st.session_state.pembagian)
 
 st.divider()
 
-# =========================
-# EXPORT PDF
-# =========================
+# ======================
+# DOWNLOAD PDF
+# ======================
 
-st.subheader("Download Laporan")
+st.subheader("Download Laporan PDF")
 
 def buat_pdf():
 
