@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -8,7 +9,7 @@ import io
 st.set_page_config(page_title="Keuangan Usaha", layout="wide")
 
 # =========================
-# LOGIN SYSTEM
+# LOGIN
 # =========================
 
 USERS = ["Steward","Meliska"]
@@ -18,6 +19,7 @@ if "login" not in st.session_state:
     st.session_state.login = False
 
 if not st.session_state.login:
+
     st.title("Login Aplikasi Keuangan")
 
     username = st.text_input("Username")
@@ -34,21 +36,34 @@ if not st.session_state.login:
 
     st.stop()
 
-st.sidebar.success(f"Login sebagai: {st.session_state.user}")
-
 # =========================
 # STYLE MAROON
 # =========================
 
 st.markdown("""
 <style>
-h1,h2,h3{color:#800000;}
+
+body{
+background-color:#fff5f5;
+}
+
+h1,h2,h3{
+color:#800000;
+}
+
 div[data-testid="metric-container"]{
 background-color:#800000;
 color:white;
 padding:15px;
 border-radius:10px;
 }
+
+.stButton>button{
+background-color:#800000;
+color:white;
+border-radius:8px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -63,8 +78,7 @@ if "transaksi" not in st.session_state:
 
 if "pembagian" not in st.session_state:
     st.session_state.pembagian = pd.DataFrame(
-        columns=["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner",
-                 "Cek Persepuluhan","Cek Tabungan","Cek Modal","Cek Partner"]
+        columns=["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner"]
     )
 
 # =========================
@@ -75,188 +89,218 @@ def rupiah(x):
     return "Rp {:,}".format(int(x)).replace(",", ".")
 
 # =========================
-# MENU
-# =========================
-
-menu = st.sidebar.selectbox(
-    "Menu",
-    ["Dashboard","Transaksi Usaha","Rekap Bulanan","Pembagian Keuntungan","Laporan Lengkap"]
-)
-
-# =========================
 # DASHBOARD
 # =========================
 
-if menu == "Dashboard":
+st.title("Dashboard Keuangan Usaha")
 
-    st.title("Our Project")
+pemasukan = st.session_state.transaksi["Pemasukan"].sum()
+pengeluaran = st.session_state.transaksi["Pengeluaran"].sum()
+keuntungan = pemasukan - pengeluaran
 
-    pemasukan = st.session_state.transaksi["Pemasukan"].sum()
-    pengeluaran = st.session_state.transaksi["Pengeluaran"].sum()
-    keuntungan = pemasukan - pengeluaran
+col1,col2,col3 = st.columns(3)
 
-    col1,col2,col3 = st.columns(3)
+col1.metric("Total Pemasukan", rupiah(pemasukan))
+col2.metric("Total Pengeluaran", rupiah(pengeluaran))
+col3.metric("Keuntungan", rupiah(keuntungan))
 
-    col1.metric("Total Pemasukan", rupiah(pemasukan))
-    col2.metric("Total Pengeluaran", rupiah(pengeluaran))
-    col3.metric("Keuntungan", rupiah(keuntungan))
+if keuntungan < 0:
+    st.warning("⚠ Usaha mengalami kerugian")
 
-    if keuntungan < 0:
-        st.warning("⚠ Usaha mengalami kerugian")
-
-    st.subheader("Transaksi Terakhir")
-    st.dataframe(st.session_state.transaksi)
+st.divider()
 
 # =========================
-# TRANSAKSI USAHA
+# INPUT TRANSAKSI
 # =========================
 
-if menu == "Transaksi Usaha":
+st.subheader("Input Transaksi")
 
-    st.title("Input Transaksi Usaha")
+col1,col2 = st.columns(2)
+
+with col1:
 
     tanggal = st.date_input("Tanggal")
-    jenis = st.selectbox("Jenis Transaksi",
-                         ["Modal Awal","Pembelian Unit","Penjualan Unit","Operasional"])
 
-    ket = st.text_input("Keterangan")
+    jenis = st.selectbox(
+        "Jenis Transaksi",
+        ["Penjualan","Pembelian Barang","Modal Masuk","Biaya Operasional"]
+    )
+
+    keterangan = st.text_input("Keterangan")
+
+with col2:
+
     unit = st.number_input("Jumlah Unit",0)
-    pemasukan = st.number_input("Pemasukan",0)
-    pengeluaran = st.number_input("Pengeluaran",0)
 
-    if st.button("Simpan Transaksi"):
+    pemasukan_input = st.number_input("Pemasukan",0)
 
-        data = {
-            "Tanggal":tanggal,
-            "Jenis":jenis,
-            "Keterangan":ket,
-            "Unit":unit,
-            "Pemasukan":pemasukan,
-            "Pengeluaran":pengeluaran
-        }
+    pengeluaran_input = st.number_input("Pengeluaran",0)
 
-        st.session_state.transaksi = pd.concat(
-            [st.session_state.transaksi,pd.DataFrame([data])],
-            ignore_index=True
-        )
+if st.button("Simpan Transaksi"):
 
-        st.success("Transaksi tersimpan")
+    data = {
+        "Tanggal":tanggal,
+        "Jenis":jenis,
+        "Keterangan":keterangan,
+        "Unit":unit,
+        "Pemasukan":pemasukan_input,
+        "Pengeluaran":pengeluaran_input
+    }
 
-    st.dataframe(st.session_state.transaksi)
+    st.session_state.transaksi = pd.concat(
+        [st.session_state.transaksi,pd.DataFrame([data])],
+        ignore_index=True
+    )
+
+    st.success("Transaksi berhasil disimpan")
+
+st.divider()
+
+# =========================
+# DATA TRANSAKSI
+# =========================
+
+st.subheader("Data Transaksi")
+
+st.dataframe(st.session_state.transaksi)
+
+st.divider()
+
+# =========================
+# GRAFIK KEUANGAN
+# =========================
+
+st.subheader("Grafik Keuangan")
+
+df = st.session_state.transaksi.copy()
+
+if not df.empty:
+
+    df["Tanggal"] = pd.to_datetime(df["Tanggal"])
+
+    grafik = df.groupby("Tanggal").agg(
+        Pemasukan=("Pemasukan","sum"),
+        Pengeluaran=("Pengeluaran","sum")
+    )
+
+    grafik["Keuntungan"] = grafik["Pemasukan"] - grafik["Pengeluaran"]
+
+    fig, ax = plt.subplots()
+
+    ax.plot(grafik.index, grafik["Pemasukan"], label="Pemasukan")
+    ax.plot(grafik.index, grafik["Pengeluaran"], label="Pengeluaran")
+    ax.plot(grafik.index, grafik["Keuntungan"], label="Keuntungan")
+
+    ax.legend()
+    ax.set_title("Grafik Keuangan")
+
+    st.pyplot(fig)
+
+st.divider()
 
 # =========================
 # REKAP BULANAN
 # =========================
 
-if menu == "Rekap Bulanan":
+st.subheader("Rekap Bulanan")
 
-    st.title("Rekap Usaha Bulanan")
+if not df.empty:
 
-    df = st.session_state.transaksi.copy()
+    df["Bulan"] = df["Tanggal"].dt.month
 
-    if not df.empty:
-        df["Bulan"] = pd.to_datetime(df["Tanggal"]).dt.month
+    rekap = df.groupby("Bulan").agg(
+        Pemasukan=("Pemasukan","sum"),
+        Pengeluaran=("Pengeluaran","sum")
+    )
 
-        rekap = df.groupby("Bulan").agg(
-            Pemasukan=("Pemasukan","sum"),
-            Pengeluaran=("Pengeluaran","sum"),
-            Unit=("Unit","sum")
-        )
+    rekap["Keuntungan"] = rekap["Pemasukan"] - rekap["Pengeluaran"]
 
-        rekap["Keuntungan"] = rekap["Pemasukan"] - rekap["Pengeluaran"]
+    st.dataframe(rekap)
 
-        st.dataframe(rekap)
+    fig2, ax2 = plt.subplots()
 
-        if (rekap["Keuntungan"] < 0).any():
-            st.warning("⚠ Ada bulan yang mengalami kerugian")
+    ax2.bar(rekap.index, rekap["Keuntungan"])
+
+    ax2.set_title("Keuntungan Per Bulan")
+
+    st.pyplot(fig2)
+
+st.divider()
 
 # =========================
 # PEMBAGIAN KEUNTUNGAN
 # =========================
 
-if menu == "Pembagian Keuntungan":
+st.subheader("Pembagian Keuntungan")
 
-    st.title("Pembagian Keuntungan")
+keuntungan_input = st.number_input("Masukkan Total Keuntungan",0)
 
-    keuntungan = st.number_input("Jumlah Keuntungan",0)
+persepuluhan = keuntungan_input * 0.10
+tabungan = keuntungan_input * 0.50
+modal = keuntungan_input * 0.30
+partner = keuntungan_input * 0.10
 
-    persepuluhan = keuntungan * 0.10
-    tabungan = keuntungan * 0.50
-    modal = keuntungan * 0.30
-    partner = keuntungan * 0.10
+st.write("Persepuluhan :", rupiah(persepuluhan))
+st.write("Tabungan :", rupiah(tabungan))
+st.write("Modal :", rupiah(modal))
+st.write("Partner :", rupiah(partner))
 
-    st.write("Persepuluhan:", rupiah(persepuluhan))
-    st.write("Tabungan:", rupiah(tabungan))
-    st.write("Modal Usaha:", rupiah(modal))
-    st.write("Partner:", rupiah(partner))
+if st.button("Simpan Pembagian"):
 
-    cek1 = st.checkbox("Persepuluhan sudah disalurkan")
-    cek2 = st.checkbox("Tabungan sudah disimpan")
-    cek3 = st.checkbox("Modal sudah dimasukkan")
-    cek4 = st.checkbox("Pembagian partner sudah diberikan")
+    data = {
+        "Tanggal":datetime.today(),
+        "Keuntungan":keuntungan_input,
+        "Persepuluhan":persepuluhan,
+        "Tabungan":tabungan,
+        "Modal":modal,
+        "Partner":partner
+    }
 
-    if st.button("Simpan Pembagian"):
-
-        data = {
-            "Tanggal":datetime.today(),
-            "Keuntungan":keuntungan,
-            "Persepuluhan":persepuluhan,
-            "Tabungan":tabungan,
-            "Modal":modal,
-            "Partner":partner,
-            "Cek Persepuluhan":cek1,
-            "Cek Tabungan":cek2,
-            "Cek Modal":cek3,
-            "Cek Partner":cek4
-        }
-
-        st.session_state.pembagian = pd.concat(
-            [st.session_state.pembagian,pd.DataFrame([data])],
-            ignore_index=True
-        )
-
-        st.success("Data pembagian tersimpan")
-
-    st.dataframe(st.session_state.pembagian)
-
-# =========================
-# LAPORAN PDF
-# =========================
-
-if menu == "Laporan Lengkap":
-
-    st.title("Laporan Keuangan Lengkap")
-
-    st.subheader("Transaksi Usaha")
-    st.dataframe(st.session_state.transaksi)
-
-    st.subheader("Pembagian Keuntungan")
-    st.dataframe(st.session_state.pembagian)
-
-    def buat_pdf():
-
-        buffer = io.BytesIO()
-        pdf = canvas.Canvas(buffer,pagesize=letter)
-
-        pdf.drawString(100,750,"Laporan Keuangan Usaha")
-
-        y = 700
-
-        for i,row in st.session_state.transaksi.iterrows():
-            text = f"{row['Tanggal']} - {row['Jenis']} - {row['Keterangan']} - {row['Pemasukan']} - {row['Pengeluaran']}"
-            pdf.drawString(50,y,text)
-            y -= 20
-
-        pdf.save()
-
-        buffer.seek(0)
-        return buffer
-
-    pdf_file = buat_pdf()
-
-    st.download_button(
-        label="Download PDF",
-        data=pdf_file,
-        file_name="laporan_keuangan.pdf",
-        mime="application/pdf"
+    st.session_state.pembagian = pd.concat(
+        [st.session_state.pembagian,pd.DataFrame([data])],
+        ignore_index=True
     )
+
+    st.success("Pembagian disimpan")
+
+st.dataframe(st.session_state.pembagian)
+
+st.divider()
+
+# =========================
+# EXPORT PDF
+# =========================
+
+st.subheader("Download Laporan")
+
+def buat_pdf():
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer,pagesize=letter)
+
+    pdf.drawString(200,750,"Laporan Keuangan Usaha")
+
+    y = 700
+
+    for i,row in st.session_state.transaksi.iterrows():
+
+        text = f"{row['Tanggal']} | {row['Jenis']} | {row['Pemasukan']} | {row['Pengeluaran']}"
+
+        pdf.drawString(50,y,text)
+
+        y -= 20
+
+    pdf.save()
+
+    buffer.seek(0)
+
+    return buffer
+
+pdf_file = buat_pdf()
+
+st.download_button(
+    label="Download PDF",
+    data=pdf_file,
+    file_name="laporan_keuangan.pdf",
+    mime="application/pdf"
+)
