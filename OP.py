@@ -77,7 +77,7 @@ def rupiah(x):
 # =========================
 # DASHBOARD
 # =========================
-st.title("Our Money Mission")
+st.title("🧸Our Money Mission🐥")
 pemasukan = st.session_state.transaksi["Pemasukan"].sum()
 pengeluaran = st.session_state.transaksi["Pengeluaran"].sum()
 keuntungan = pemasukan - pengeluaran
@@ -235,6 +235,7 @@ if st.button("📋 Lihat Log Login"):
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
+
 
 
 
