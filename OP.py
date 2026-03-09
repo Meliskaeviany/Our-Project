@@ -30,7 +30,7 @@ if "login" not in st.session_state:
     st.session_state.login = False
 
 if not st.session_state.login:
-    st.title("Login Aplikasi Keuangan")
+    st.title("Hello !!")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
@@ -77,7 +77,7 @@ def rupiah(x):
 # =========================
 # DASHBOARD
 # =========================
-st.title("Dashboard Keuangan Usaha")
+st.title("Our Money Mission")
 pemasukan = st.session_state.transaksi["Pemasukan"].sum()
 pengeluaran = st.session_state.transaksi["Pengeluaran"].sum()
 keuntungan = pemasukan - pengeluaran
@@ -235,5 +235,6 @@ if st.button("📋 Lihat Log Login"):
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
+
 
 
