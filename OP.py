@@ -103,7 +103,7 @@ with col2:
     unit = st.number_input("Jumlah Unit",0)
     pemasukan_input = st.number_input("Pemasukan",0)
     pengeluaran_input = st.number_input("Pengeluaran",0)
-    rekening = st.selectbox("Pilih Rekening", ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
+    rekening = st.selectbox("Pilih Rekening", ["Rekening Bersama","BCA Steward 🧸 ","BCA Meliska 🐥 ","ALADIN Steward 🧸 ","Aladin Meliska 🐥 "])
 
 if st.button("Simpan Transaksi"):
     new_data = pd.DataFrame([{
@@ -235,6 +235,7 @@ if st.button("📋 Lihat Log Login"):
         st.dataframe(log_df)
     else:
         st.write("Belum ada login yang tercatat.")
+
 
 
 
