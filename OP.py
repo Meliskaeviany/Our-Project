@@ -64,9 +64,9 @@ def load_csv(file, columns):
         return pd.DataFrame(columns=columns)
 
 st.session_state.transaksi = load_csv(transaksi_file,
-                                      ["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran","Rekening","SubRekening"])
+                                      ["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran","Rekening"])
 st.session_state.pembagian = load_csv(pembagian_file,
-                                      ["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner","Rekening","SubRekening"])
+                                      ["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner","Rekening"])
 
 # =========================
 # FORMAT RUPIAH
@@ -103,12 +103,7 @@ with col2:
     unit = st.number_input("Jumlah Unit",0)
     pemasukan_input = st.number_input("Pemasukan",0)
     pengeluaran_input = st.number_input("Pengeluaran",0)
-    rekening = st.selectbox("Kategori Rekening", ["Rekening Bersama", "Aladin"])
-    subrekening = ""
-    if rekening == "Rekening Bersama":
-        subrekening = st.selectbox("SubRekening", ["BCA Steward", "BCA Meliska"])
-    elif rekening == "Aladin":
-        subrekening = st.selectbox("SubRekening", ["Aladin Steward", "Aladin Meliska"])
+    rekening = st.selectbox("Pilih Rekening", ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
 
 if st.button("Simpan Transaksi"):
     new_data = pd.DataFrame([{
@@ -118,8 +113,7 @@ if st.button("Simpan Transaksi"):
         "Unit": unit,
         "Pemasukan": pemasukan_input,
         "Pengeluaran": pengeluaran_input,
-        "Rekening": rekening,
-        "SubRekening": subrekening
+        "Rekening": rekening
     }])
     st.session_state.transaksi = pd.concat([st.session_state.transaksi,new_data], ignore_index=True)
     st.session_state.transaksi.to_csv(transaksi_file, index=False)
@@ -141,7 +135,7 @@ if st.button("Hapus Transaksi"):
 st.divider()
 
 # =========================
-# GRAFIK KEUANGAN HARIAN
+# GRAFIK KEUANGAN
 # =========================
 st.subheader("Grafik Keuangan Harian")
 df = st.session_state.transaksi.copy()
@@ -154,9 +148,6 @@ if not df.empty:
     grafik["Keuntungan"] = grafik["Pemasukan"] - grafik["Pengeluaran"]
     st.line_chart(grafik)
 
-# =========================
-# GRAFIK KEUANGAN BULANAN
-# =========================
 st.subheader("Grafik Keuangan Bulanan")
 if not df.empty:
     df["Bulan"] = df["Tanggal"].dt.to_period("M")
@@ -177,13 +168,7 @@ persepuluhan = keuntungan_input * 0.10
 tabungan = keuntungan_input * 0.50
 modal = keuntungan_input * 0.30
 partner = keuntungan_input * 0.10
-
-rekening_pb = st.selectbox("Pilih Rekening Pembagian", ["Rekening Bersama","Aladin"])
-subrekening_pb = ""
-if rekening_pb == "Rekening Bersama":
-    subrekening_pb = st.selectbox("SubRekening", ["BCA Steward", "BCA Meliska"])
-elif rekening_pb == "Aladin":
-    subrekening_pb = st.selectbox("SubRekening", ["Aladin Steward", "Aladin Meliska"])
+rekening_pb = st.selectbox("Pilih Rekening Pembagian", ["Rekening Bersama","BCA Steward","BCA Meliska","ALADIN Steward","Aladin Meliska"])
 
 st.write("Persepuluhan :", rupiah(persepuluhan))
 st.write("Tabungan :", rupiah(tabungan))
@@ -198,8 +183,7 @@ if st.button("Simpan Pembagian"):
         "Tabungan": tabungan,
         "Modal": modal,
         "Partner": partner,
-        "Rekening": rekening_pb,
-        "SubRekening": subrekening_pb
+        "Rekening": rekening_pb
     }])
     st.session_state.pembagian = pd.concat([st.session_state.pembagian,new_data], ignore_index=True)
     st.session_state.pembagian.to_csv(pembagian_file, index=False)
@@ -227,7 +211,7 @@ def buat_pdf():
     pdf.drawString(150, y, "Jenis")
     pdf.drawString(300, y, "Pemasukan")
     pdf.drawString(420, y, "Pengeluaran")
-    pdf.drawString(500, y, "Rekening/Sub")
+    pdf.drawString(500, y, "Rekening")
     y -= 10
     pdf.line(50, y, 562, y)
     y -= 20
@@ -237,7 +221,7 @@ def buat_pdf():
         pdf.drawString(150, y, str(row["Jenis"]))
         pdf.drawString(300, y, rupiah(row["Pemasukan"]))
         pdf.drawString(420, y, rupiah(row["Pengeluaran"]))
-        pdf.drawString(500, y, str(row["Rekening"])+"/"+str(row["SubRekening"]))
+        pdf.drawString(500, y, str(row["Tabungan"]))
         y -= 20
         if y < 50:
             pdf.showPage()
