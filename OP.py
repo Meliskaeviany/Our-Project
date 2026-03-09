@@ -5,9 +5,50 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
 
-# ======================
+# =========================
+# STYLE MAROON & PUTIH
+# =========================
+st.markdown(
+    """
+    <style>
+    /* Background utama */
+    .stApp {
+        background-color: #740505;
+        color: #fefdfd;
+    }
+
+    /* Judul dan header */
+    h1,h2,h3,h4,h5,h6 {
+        color: #fefdfd;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #5c0303;
+        color: #fefdfd;
+    }
+
+    /* Tombol */
+    div.stButton > button {
+        background-color: #9c0a0a;
+        color: #fefdfd;
+    }
+
+    /* Metric card */
+    div[data-testid="metric-container"] {
+        background-color: #8b0c0c;
+        color: #fefdfd;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# =========================
 # LOGIN
-# ======================
+# =========================
 USERS = ["Steward","Meliska"]
 PASSWORD = "1312"
 
@@ -27,9 +68,9 @@ if not st.session_state.login:
             st.error("Username atau password salah")
     st.stop()
 
-# ======================
+# =========================
 # DATA STORAGE
-# ======================
+# =========================
 if "transaksi" not in st.session_state:
     st.session_state.transaksi = pd.DataFrame(
         columns=["Tanggal","Jenis","Keterangan","Unit","Pemasukan","Pengeluaran"]
@@ -40,15 +81,15 @@ if "pembagian" not in st.session_state:
         columns=["Tanggal","Keuntungan","Persepuluhan","Tabungan","Modal","Partner"]
     )
 
-# ======================
+# =========================
 # FORMAT RUPIAH
-# ======================
+# =========================
 def rupiah(x):
     return "Rp {:,}".format(int(x)).replace(",", ".")
 
-# ======================
+# =========================
 # DASHBOARD
-# ======================
+# =========================
 st.title("Dashboard Keuangan Usaha")
 
 pemasukan = st.session_state.transaksi["Pemasukan"].sum()
@@ -65,9 +106,9 @@ if keuntungan < 0:
 
 st.divider()
 
-# ======================
+# =========================
 # INPUT TRANSAKSI
-# ======================
+# =========================
 st.subheader("Input Transaksi")
 col1, col2 = st.columns(2)
 
@@ -94,17 +135,17 @@ if st.button("Simpan Transaksi"):
 
 st.divider()
 
-# ======================
+# =========================
 # DATA TRANSAKSI
-# ======================
+# =========================
 st.subheader("Data Transaksi")
 st.dataframe(st.session_state.transaksi)
 
 st.divider()
 
-# ======================
+# =========================
 # GRAFIK KEUANGAN
-# ======================
+# =========================
 st.subheader("Grafik Keuangan")
 df = st.session_state.transaksi.copy()
 if not df.empty:
@@ -116,9 +157,9 @@ if not df.empty:
 
 st.divider()
 
-# ======================
+# =========================
 # REKAP BULANAN
-# ======================
+# =========================
 st.subheader("Rekap Bulanan")
 if not df.empty:
     df["Bulan"] = df["Tanggal"].dt.month
@@ -129,9 +170,9 @@ if not df.empty:
 
 st.divider()
 
-# ======================
+# =========================
 # PEMBAGIAN KEUNTUNGAN
-# ======================
+# =========================
 st.subheader("Pembagian Keuntungan")
 keuntungan_input = st.number_input("Masukkan Total Keuntungan",0)
 persepuluhan = keuntungan_input * 0.10
@@ -160,9 +201,9 @@ st.dataframe(st.session_state.pembagian)
 
 st.divider()
 
-# ======================
+# =========================
 # DOWNLOAD PDF
-# ======================
+# =========================
 st.subheader("Download Laporan PDF")
 
 def buat_pdf():
